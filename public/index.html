@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <title>YOLCATL - Cozy Farming & Bullet Heaven</title>
+    <script>
+        (function () {
+            var saved = null;
+            try { saved = localStorage.getItem('yolcatl-theme'); } catch (e) {}
+            var dark = saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.documentElement.classList.toggle('dark', dark);
+        })();
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Lilita+One&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        papel: '#E91E63',
+                        marigold: '#FF9800',
+                        talavera: '#0284C7',
+                        agave: '#166534',
+                        darkbg: '#160d2b',
+                        lightbg: '#fdf5e6',
+                        panel: '#ffffff',
+                        darkpanel: '#2d1b4e'
+                    },
+                    fontFamily: {
+                        heading: ['"Lilita One"', 'cursive'],
+                        sans: ['"Inter"', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'pop': '4px 4px 0px 0px rgba(0,0,0,1)',
+                        'pop-hover': '2px 2px 0px 0px rgba(0,0,0,1)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        html { scroll-padding-top: 6rem; }
+        section[id], footer[id] { scroll-margin-top: 6rem; }
+
+        /* Evita que el texto se salga de sus recuadros */
+        h1, h2, h3, p, li, span, a, button, label { overflow-wrap: break-word; }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: #fdf5e6; }
+        .dark ::-webkit-scrollbar-track { background: #160d2b; }
+        ::-webkit-scrollbar-thumb { background: #FF9800; border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: #E91E63; }
+
+        /* Transición suave al cambiar de tema */
+        body { transition: background-color 0.3s ease, color 0.3s ease; }
+
+        /* Foco visible para navegación con teclado (WCAG 2.4.7) */
+        :focus-visible { outline: 3px solid #0284C7; outline-offset: 2px; }
+        .dark :focus-visible { outline-color: #FFD54F; }
+        footer :focus-visible { outline-color: #ffffff; }
+
+        /* Enlaces de texto: sin animación, solo subrayado como indicador estático */
+        a:not(.btn):hover { text-decoration: underline; }
+
+        /* ===== BOTONES: único elemento con efecto hover ===== */
+        .btn, .btn-flat { cursor: pointer; transition: transform .15s ease, box-shadow .15s ease, filter .15s ease; }
+        .btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0 0 #000;
+            filter: brightness(1.1) drop-shadow(0 0 10px rgba(255, 152, 0, .9));
+        }
+        .btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 0 #000; }
+        .btn-flat:hover { filter: brightness(1.12) drop-shadow(0 0 8px rgba(255, 152, 0, .95)); }
+        .btn:disabled, .btn-flat:disabled { cursor: not-allowed; }
+        .btn:disabled:hover { transform: none; box-shadow: 4px 4px 0 0 #000; filter: none; }
+        @media (prefers-reduced-motion: reduce) {
+            .btn, .btn-flat, body { transition: none; }
+            .btn:hover, .btn:active { transform: none; }
+        }
+
+        /* Pestañas */
+        .tab-btn { background: #d1d5db; color: #1f2937; }
+        .dark .tab-btn { background: #374151; color: #e5e7eb; }
+        .tab-btn[aria-selected="true"],
+        .dark .tab-btn[aria-selected="true"] { background: #FF9800; color: #000; box-shadow: 2px 2px 0 0 #000; }
+        @media (min-width: 640px) {
+            .tab-btn[aria-selected="true"],
+            .dark .tab-btn[aria-selected="true"] { box-shadow: 2px -2px 0 0 #000; }
+        }
+        .tab-content { display: none; animation: fadeIn 0.4s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        @media (prefers-reduced-motion: reduce) { .tab-content { animation: none; } }
+
+        /* Folkloric bottom border pattern */
+        .border-pattern {
+            border-bottom: 8px solid;
+            border-image: repeating-linear-gradient( 45deg, #FF9800, #FF9800 10px, #E91E63 10px, #E91E63 20px, #0284C7 20px, #0284C7 30px, #166534 30px, #166534 40px ) 8;
+        }
+
+        /* Bestiario Display Logic vinculada al modo oscuro (noche) */
+        .bestiario-defensa { display: none; }
+        .dark .bestiario-defensa { display: block; }
+        .dark .bestiario-hacienda { display: none; }
+
+        /* Ventana emergente de inicio de sesión */
+        dialog#login-dialog { max-height: calc(100vh - 2rem); overflow-y: auto; }
+    </style>
+</head>
+<body class="bg-lightbg text-gray-900 font-sans dark:bg-darkbg dark:text-gray-100 overflow-x-hidden selection:bg-papel selection:text-white pb-24">
+
+    <!-- Enlace para saltar al contenido (teclado y lectores de pantalla) -->
+    <a href="#contenido" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[60] bg-white text-black font-bold px-4 py-2 rounded border-2 border-black">Saltar al contenido principal</a>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-20 left-4 right-4 sm:left-auto sm:right-5 sm:bottom-5 z-50 flex flex-col items-end gap-2" aria-live="polite"></div>
+
+    <!-- Switch de Día/Noche Flotante -->
+    <div class="fixed bottom-5 left-5 z-50 inline-flex bg-white dark:bg-darkpanel p-1 rounded-full border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]" role="group" aria-label="Tema de color">
+        <button id="btn-dia" type="button" onclick="setTheme('light')" aria-pressed="true" class="btn-flat relative z-10 w-20 sm:w-24 py-2 rounded-full font-bold text-xs sm:text-sm text-black dark:text-gray-300 flex items-center justify-center gap-1" aria-label="Cambiar a modo Día">
+            <span aria-hidden="true">☀️</span> DÍA
+        </button>
+        <button id="btn-noche" type="button" onclick="setTheme('dark')" aria-pressed="false" class="btn-flat relative z-10 w-20 sm:w-24 py-2 rounded-full font-bold text-xs sm:text-sm text-gray-700 dark:text-white flex items-center justify-center gap-1" aria-label="Cambiar a modo Noche">
+            <span aria-hidden="true">🌙</span> NOCHE
+        </button>
+        <!-- Fondo deslizante -->
+        <div aria-hidden="true" class="absolute top-1 left-1 w-20 sm:w-24 h-[calc(100%-8px)] bg-yellow-400 dark:bg-indigo-600 rounded-full border-2 border-black shadow-sm transition-transform duration-300 dark:translate-x-full"></div>
+    </div>
+
+    <!-- Header & Navbar -->
+    <header class="fixed top-0 w-full bg-lightbg dark:bg-darkbg z-40 border-pattern">
+        <nav class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex justify-between items-center gap-2 h-20" aria-label="Navegación principal">
+            <!-- Logo -->
+            <a href="#" class="flex-shrink min-w-0 flex items-center">
+                <img src="logo.png" alt="Yolcatl, ir al inicio" class="h-8 sm:h-10 w-auto max-w-full">
+            </a>
+
+            <!-- Links (Desktop) -->
+            <div class="hidden lg:flex space-x-6 font-semibold text-sm">
+                <a href="#hacienda" class="rounded px-2 py-1">La Hacienda</a>
+                <a href="#ciclo" class="rounded px-2 py-1">Ciclo de Juego</a>
+                <a href="#alquimia" class="rounded px-2 py-1">Alquimia AR</a>
+                <a href="#metamorfosis" class="rounded px-2 py-1">Metamorfosis</a>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                <button type="button" onclick="openLogin()" class="btn bg-yellow-400 text-black font-bold py-2 px-2.5 sm:px-4 rounded border-2 border-black shadow-pop text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap" aria-label="Recompensa diaria: inicia sesión para reclamarla">
+                    <span aria-hidden="true">🎁</span> <span class="hidden sm:inline">Recompensa Diaria</span>
+                </button>
+                <button type="button" onclick="openLogin()" class="btn bg-white text-black font-bold py-2 px-2.5 sm:px-4 rounded border-2 border-black shadow-pop text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap" aria-label="Iniciar sesión">
+                    <span aria-hidden="true">👤</span> <span class="hidden sm:inline">Iniciar sesión</span>
+                </button>
+                <a href="https://itch.io" target="_blank" rel="noopener noreferrer" class="btn bg-marigold text-black font-heading tracking-wider py-2 px-3 sm:px-6 rounded border-2 border-black shadow-pop text-sm sm:text-lg whitespace-nowrap">
+                    JUGAR<span class="sr-only"> (se abre en una pestaña nueva)</span>
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <main id="contenido" tabindex="-1" class="focus:outline-none">
+        <!-- Hero Section -->
+        <section class="pt-28 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto min-h-[90vh] flex flex-col justify-center">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <!-- Left: Content -->
+                <div class="space-y-6 min-w-0">
+                    <div class="inline-block max-w-full bg-papel text-white font-bold py-1 px-3 rounded border-2 border-black shadow-pop text-xs sm:text-sm uppercase tracking-widest">
+                        Cozy Farming - AR - Bullet Heaven
+                    </div>
+                    <!-- H1 Único -->
+                    <h1 class="font-heading text-4xl min-[400px]:text-5xl sm:text-6xl lg:text-7xl leading-none uppercase text-black dark:text-white drop-shadow-md">
+                        Cultiva de día,<br>sobrevive<br>de noche.
+                        <span class="block text-papel dark:text-pink-400 mt-2">Despierta al nahual que llevas dentro</span>
+                    </h1>
+                    <p class="text-base sm:text-lg font-medium max-w-lg border-l-4 border-marigold pl-4 dark:text-gray-300">
+                        Una hacienda colonial suspendida en el tiempo. Sana a la fauna sagrada con herbolaria ancestral en Realidad Aumentada y defiéndete de la corrupción humana en batallas frenéticas.
+                    </p>
+
+                    <div class="flex flex-wrap gap-4 pt-4">
+                        <!-- Descarga directa del APK -->
+                        <a href="Yolcatl-Demo.apk" download="Yolcatl-Demo.apk" class="btn w-full sm:w-auto justify-center bg-marigold text-black font-bold py-3 px-6 sm:px-8 rounded-full border-2 border-black shadow-pop flex items-center gap-2 text-sm sm:text-base">
+                            <span aria-hidden="true">⬇</span> DESCARGAR DEMO<span class="sr-only"> (archivo APK para Android)</span>
+                        </a>
+                        <a href="https://www.youtube.com" target="_blank" rel="noopener noreferrer" class="btn w-full sm:w-auto justify-center bg-white text-black font-bold py-3 px-6 sm:px-8 rounded-full border-2 border-black shadow-pop flex items-center gap-2 text-sm sm:text-base">
+                            <span aria-hidden="true">▶️</span> VER TRÁILER<span class="sr-only"> (se abre YouTube en una pestaña nueva)</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Right: Imagen (cambia según el tema) -->
+                <div class="relative rounded-2xl overflow-hidden border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] aspect-[4/3] bg-panel dark:bg-darkpanel mt-8 lg:mt-0 min-w-0">
+                    <img id="hero-img-light" src="HaciendaDia.png" class="absolute inset-0 w-full h-full object-cover block dark:hidden" alt="Captura de pantalla de la Hacienda de día enfocada en cultivo y crianza">
+                    <img id="hero-img-dark" src="HaciendaNoche.png" class="absolute inset-0 w-full h-full object-cover hidden dark:block" alt="Captura de pantalla de la Hacienda de noche durante batallas de nahuales">
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: El Despertar de la Visión -->
+        <section id="hacienda" class="py-16 bg-white dark:bg-[#1a103c] border-y-4 border-black">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="font-heading text-3xl sm:text-4xl mb-2 text-talavera dark:text-blue-400 uppercase">El Despertar de la Visión</h2>
+                <p class="mb-10 font-medium text-gray-600 dark:text-gray-400 text-sm sm:text-base">Sinopsis del mundo que habitarás entre el amanecer y el eclipse.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Cards Left -->
+                    <div class="space-y-4 min-w-0">
+                        <article class="bg-lightbg dark:bg-darkpanel p-5 sm:p-6 rounded-xl border-2 border-black shadow-pop">
+                            <div class="flex items-start gap-4">
+                                <div aria-hidden="true" class="bg-papel text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl flex-shrink-0 border-2 border-black">👁️</div>
+                                <div class="min-w-0">
+                                    <h3 class="font-bold text-lg sm:text-xl mb-2 text-black dark:text-white">El Experimento y «La Visión»</h3>
+                                    <p class="text-xs sm:text-sm dark:text-gray-300">Un ritual fallido despierta tu percepción: ahora ves la contaminación invisible que envenena el valle.</p>
+                                </div>
+                            </div>
+                        </article>
+                        <article class="bg-lightbg dark:bg-darkpanel p-5 sm:p-6 rounded-xl border-2 border-black shadow-pop">
+                            <div class="flex items-start gap-4">
+                                <div aria-hidden="true" class="bg-marigold text-black w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl flex-shrink-0 border-2 border-black">🏠</div>
+                                <div class="min-w-0">
+                                    <h3 class="font-bold text-lg sm:text-xl mb-2 text-black dark:text-white">La Hacienda Ancestral</h3>
+                                    <p class="text-xs sm:text-sm dark:text-gray-300">Un refugio virreinal intacto, rodeado por una jungla corrompida que avanza cada noche.</p>
+                                </div>
+                            </div>
+                        </article>
+                        <article class="bg-lightbg dark:bg-darkpanel p-5 sm:p-6 rounded-xl border-2 border-black shadow-pop">
+                            <div class="flex items-start gap-4">
+                                <div aria-hidden="true" class="bg-agave text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl flex-shrink-0 border-2 border-black">🌿</div>
+                                <div class="min-w-0">
+                                    <h3 class="font-bold text-lg sm:text-xl mb-2 text-black dark:text-white">Los Guardianes de la Naturaleza</h3>
+                                    <p class="text-xs sm:text-sm dark:text-gray-300">Espíritus antiguos que otorgan bendiciones botánicas a cambio de purificar la tierra con Orbes Místicos.</p>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                    <!-- Art Right -->
+                    <div class="rounded-xl overflow-hidden border-4 border-black shadow-pop relative aspect-square md:aspect-auto bg-panel dark:bg-darkpanel min-w-0">
+                        <img src="AlebrijesGuardianes.png" loading="lazy" alt="Ilustración conceptual mostrando alebrijes protectores y guardianes de la naturaleza" class="absolute inset-0 w-full h-full object-cover">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: El Ciclo de Juego -->
+        <section id="ciclo" class="py-16 sm:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="font-heading text-3xl sm:text-4xl mb-2 uppercase text-black dark:text-white">El Ciclo de Juego</h2>
+            <p class="mb-8 font-medium text-gray-600 dark:text-gray-400 text-sm sm:text-base">Tres fases circulares que se alimentan entre sí, amanecer tras eclipse.</p>
+
+            <!-- Tabs -->
+            <div class="flex flex-wrap gap-2 mb-6 sm:mb-8 border-b-4 border-black pb-4" role="tablist" aria-label="Fases del ciclo de juego">
+                <button type="button" role="tab" aria-selected="true" aria-controls="tab1" tabindex="0" onclick="switchTab('tab1')" id="btn-tab1" class="tab-btn btn-flat font-bold py-2 px-4 sm:px-6 rounded-lg sm:rounded-t-lg sm:rounded-b-none border-2 border-black text-xs sm:text-sm">
+                    <span aria-hidden="true">1️⃣</span> Exploración y Cultivo
+                </button>
+                <button type="button" role="tab" aria-selected="false" aria-controls="tab2" tabindex="-1" onclick="switchTab('tab2')" id="btn-tab2" class="tab-btn btn-flat font-bold py-2 px-4 sm:px-6 rounded-lg sm:rounded-t-lg sm:rounded-b-none border-2 border-black text-xs sm:text-sm">
+                    <span aria-hidden="true">2️⃣</span> Alquimia AR y Curación
+                </button>
+                <button type="button" role="tab" aria-selected="false" aria-controls="tab3" tabindex="-1" onclick="switchTab('tab3')" id="btn-tab3" class="tab-btn btn-flat font-bold py-2 px-4 sm:px-6 rounded-lg sm:rounded-t-lg sm:rounded-b-none border-2 border-black text-xs sm:text-sm">
+                    <span aria-hidden="true">3️⃣</span> Supervivencia Nocturna
+                </button>
+            </div>
+
+            <!-- Tab Contents -->
+            <div class="bg-white dark:bg-darkpanel p-5 sm:p-8 rounded-xl border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] min-h-[300px]">
+                <!-- Tab 1 -->
+                <div id="tab1" role="tabpanel" aria-labelledby="btn-tab1" tabindex="0" class="tab-content active">
+                    <div class="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+                        <div aria-hidden="true" class="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 bg-agave rounded-full border-2 border-black flex justify-center items-center text-white text-xl sm:text-2xl">🌱</div>
+                        <h3 class="font-heading text-2xl sm:text-3xl text-black dark:text-white leading-tight min-w-0">Labranza Sagrada en 4 Fases</h3>
+                    </div>
+                    <p class="mb-6 text-sm sm:text-base dark:text-gray-300">Ara la tierra, siembra semillas sagradas, riega y cosecha Copal, Cempasúchil y Árnica para tus pócimas.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-lightbg dark:bg-slate-800 p-3 sm:p-4 border-2 border-black rounded text-center font-bold text-sm text-black dark:text-white">Arar la parcela</div>
+                        <div class="bg-lightbg dark:bg-slate-800 p-3 sm:p-4 border-2 border-black rounded text-center font-bold text-sm text-black dark:text-white">Sembrar semillas</div>
+                        <div class="bg-lightbg dark:bg-slate-800 p-3 sm:p-4 border-2 border-black rounded text-center font-bold text-sm text-black dark:text-white">Regar con manantial</div>
+                        <div class="bg-lightbg dark:bg-slate-800 p-3 sm:p-4 border-2 border-black rounded text-center font-bold text-sm text-black dark:text-white">Cosechar herbolaria</div>
+                    </div>
+                </div>
+
+                <!-- Tab 2 -->
+                <div id="tab2" role="tabpanel" aria-labelledby="btn-tab2" tabindex="0" class="tab-content">
+                    <div class="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+                        <div aria-hidden="true" class="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 bg-papel rounded-full border-2 border-black flex justify-center items-center text-white text-xl sm:text-2xl">💖</div>
+                        <h3 class="font-heading text-2xl sm:text-3xl text-black dark:text-white leading-tight min-w-0">Enfermería y Pócimas Ancestrales</h3>
+                    </div>
+                    <p class="mb-6 text-sm sm:text-base dark:text-gray-300">Diagnostica en la enfermería y prepara remedios para liberar a los animales del trauma y la polución.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="bg-pink-100 dark:bg-pink-900/30 p-3 sm:p-4 border-2 border-papel rounded font-bold text-center text-sm text-black dark:text-white">Diagnóstico del animal</div>
+                        <div class="bg-pink-100 dark:bg-pink-900/30 p-3 sm:p-4 border-2 border-papel rounded font-bold text-center text-sm text-black dark:text-white">Mezcla de resinas y hierbas</div>
+                        <div class="bg-pink-100 dark:bg-pink-900/30 p-3 sm:p-4 border-2 border-papel rounded font-bold text-center text-sm text-black dark:text-white">Aplicación del remedio</div>
+                        <div class="bg-pink-100 dark:bg-pink-900/30 p-3 sm:p-4 border-2 border-papel rounded font-bold text-center text-sm text-black dark:text-white">Liberación del espíritu</div>
+                    </div>
+                </div>
+
+                <!-- Tab 3 -->
+                <div id="tab3" role="tabpanel" aria-labelledby="btn-tab3" tabindex="0" class="tab-content">
+                    <div class="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+                        <div aria-hidden="true" class="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0 bg-purple-600 rounded-full border-2 border-black flex justify-center items-center text-white text-xl sm:text-2xl">💀</div>
+                        <h3 class="font-heading text-2xl sm:text-3xl text-black dark:text-white leading-tight min-w-0">Bullet Heaven nocturno</h3>
+                    </div>
+                    <p class="mb-6 text-sm sm:text-base dark:text-gray-300">Oleadas de Entidades asedian el santuario; esquiva, ataca en automático y despliega habilidades animales únicas.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="bg-purple-100 dark:bg-purple-900/40 p-3 sm:p-4 border-2 border-purple-600 rounded font-bold text-center text-sm text-black dark:text-white">Oleadas con 3 días de anticipación</div>
+                        <div class="bg-purple-100 dark:bg-purple-900/40 p-3 sm:p-4 border-2 border-purple-600 rounded font-bold text-center text-sm text-black dark:text-white">Ataque automático</div>
+                        <div class="bg-purple-100 dark:bg-purple-900/40 p-3 sm:p-4 border-2 border-purple-600 rounded font-bold text-center text-sm text-black dark:text-white">Esquiva y posicionamiento</div>
+                        <div class="bg-purple-100 dark:bg-purple-900/40 p-3 sm:p-4 border-2 border-purple-600 rounded font-bold text-center text-sm text-black dark:text-white">Habilidades nahuales</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Alquimia AR -->
+        <section id="alquimia" class="py-16 bg-blue-50 dark:bg-slate-900 border-y-4 border-black">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                    <!-- Phone Image Left -->
+                    <div class="relative w-full max-w-[280px] sm:max-w-sm mx-auto">
+                        <div class="border-8 border-black rounded-[2.5rem] overflow-hidden bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] sm:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] relative aspect-[9/19]">
+                            <img src="AlquimiaAR.png" loading="lazy" alt="Simulación de interfaz de Realidad Aumentada mostrando un molcajete sobre una carta" class="w-full h-full object-cover">
+                            <div class="absolute bottom-4 left-0 right-0 flex justify-center gap-4" aria-hidden="true">
+                                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-white/50 backdrop-blur rounded-full border-2 border-black flex items-center justify-center text-sm sm:text-base">📷</div>
+                                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-papel rounded-full border-2 border-black flex items-center justify-center text-white font-bold text-sm sm:text-base">AR</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Features Right -->
+                    <div class="min-w-0">
+                        <div class="inline-block bg-talavera text-white font-bold py-1 px-3 rounded border-2 border-black text-[10px] sm:text-xs uppercase mb-4 tracking-wider">Experiencia Innovadora</div>
+                        <h2 class="font-heading text-3xl sm:text-4xl mb-4 sm:mb-6 text-black dark:text-white uppercase">Alquimia Interactiva en AR</h2>
+                        <p class="mb-8 font-medium text-base sm:text-lg dark:text-gray-300">Tu mesa se convierte en el laboratorio del santuario. Interactúa con elementos del juego en el mundo real.</p>
+
+                        <ul class="space-y-4 sm:space-y-6">
+                            <li class="flex items-start gap-3 sm:gap-4 bg-white dark:bg-darkpanel p-3 sm:p-4 rounded-lg border-2 border-black shadow-pop">
+                                <span aria-hidden="true" class="text-xl sm:text-2xl mt-1">📱</span>
+                                <div class="min-w-0">
+                                    <h3 class="font-bold text-base sm:text-lg dark:text-white">Apunta a tu carta física</h3>
+                                    <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Las cartas coleccionables funcionan como Target AR sobre cualquier superficie.</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start gap-3 sm:gap-4 bg-white dark:bg-darkpanel p-3 sm:p-4 rounded-lg border-2 border-black shadow-pop">
+                                <span aria-hidden="true" class="text-xl sm:text-2xl mt-1">🥣</span>
+                                <div class="min-w-0">
+                                    <h3 class="font-bold text-base sm:text-lg dark:text-white">Muele en el Molcajete 3D</h3>
+                                    <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Un molcajete tridimensional se proyecta sobre la carta para moler las hierbas cultivadas.</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start gap-3 sm:gap-4 bg-white dark:bg-darkpanel p-3 sm:p-4 rounded-lg border-2 border-black shadow-pop">
+                                <span aria-hidden="true" class="text-xl sm:text-2xl mt-1">🕹️</span>
+                                <div class="min-w-0">
+                                    <h3 class="font-bold text-base sm:text-lg dark:text-white">Modo 2D sin cámara</h3>
+                                    <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Accesibilidad integrada: la misma alquimia, sin necesidad de cámara ni cartas.</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Bestiario y Formas Nahuales -->
+        <section id="metamorfosis" class="py-16 sm:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="font-heading text-3xl sm:text-4xl mb-2 text-center uppercase text-black dark:text-white">Bestiario y Formas Nahuales</h2>
+            <p class="mb-4 text-center font-medium text-gray-600 dark:text-gray-400 text-sm sm:text-base">Cada animal rescatado te presta su oficio de día y su poder de noche.</p>
+
+            <!-- Indicador de mecánica revelado -->
+            <div class="bg-yellow-100 dark:bg-indigo-900/50 border-2 border-marigold dark:border-indigo-500 rounded-lg p-3 max-w-2xl mx-auto mb-10 text-center shadow-sm">
+                <p class="font-bold text-orange-800 dark:text-indigo-200 text-sm sm:text-base flex justify-center items-center gap-2">
+                    <span aria-hidden="true">💡</span> <span>Cambia entre el Día y la Noche en el botón flotante para revelar los poderes ocultos</span>
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Animal 1: Armadillo -->
+                <article class="min-w-0 bg-white dark:bg-darkpanel rounded-xl border-t-8 border-r-2 border-b-2 border-l-2 border-black border-t-gray-500 shadow-pop overflow-hidden flex flex-col">
+                    <div class="p-3 sm:p-4 border-b-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-800 flex justify-between items-center gap-2">
+                        <h3 class="font-bold text-lg sm:text-xl uppercase tracking-wider dark:text-white min-w-0">Armadillo</h3>
+                        <span aria-hidden="true" class="text-xl sm:text-2xl flex-shrink-0">🪨</span>
+                    </div>
+                    <div class="p-4 flex-grow">
+                        <div class="bestiario-hacienda">
+                            <div class="text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">Hacienda</div>
+                            <div class="bg-gray-100 dark:bg-gray-800 p-2 rounded border border-gray-300 dark:border-gray-600 text-xs sm:text-sm font-medium text-black dark:text-gray-200">Despeja rocas en la granja</div>
+                        </div>
+                        <div class="bestiario-defensa">
+                            <div class="text-[10px] sm:text-xs font-bold text-papel dark:text-pink-300 uppercase tracking-wider mb-1">Defensa</div>
+                            <div class="bg-gray-100 dark:bg-gray-800 p-2 rounded border border-gray-300 dark:border-gray-600 text-xs sm:text-sm font-medium text-black dark:text-gray-200">Aturdimiento en área en defensa</div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Animal 2: Colibrí -->
+                <article class="min-w-0 bg-white dark:bg-darkpanel rounded-xl border-t-8 border-r-2 border-b-2 border-l-2 border-black border-t-papel shadow-pop overflow-hidden flex flex-col">
+                    <div class="p-3 sm:p-4 border-b-2 border-gray-200 dark:border-gray-700 bg-pink-50 dark:bg-slate-800 flex justify-between items-center gap-2">
+                        <h3 class="font-bold text-lg sm:text-xl uppercase tracking-wider dark:text-white min-w-0">Colibrí</h3>
+                        <span aria-hidden="true" class="text-xl sm:text-2xl flex-shrink-0">🌸</span>
+                    </div>
+                    <div class="p-4 flex-grow">
+                        <div class="bestiario-hacienda">
+                            <div class="text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">Hacienda</div>
+                            <div class="bg-pink-100/50 dark:bg-gray-800 p-2 rounded border border-gray-300 dark:border-gray-600 text-xs sm:text-sm font-medium text-black dark:text-gray-200">Poliniza y acelera cultivos</div>
+                        </div>
+                        <div class="bestiario-defensa">
+                            <div class="text-[10px] sm:text-xs font-bold text-papel dark:text-pink-300 uppercase tracking-wider mb-1">Defensa</div>
+                            <div class="bg-pink-100/50 dark:bg-gray-800 p-2 rounded border border-gray-300 dark:border-gray-600 text-xs sm:text-sm font-medium text-black dark:text-gray-200">Dash evasivo ultra rápido</div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Animal 3: Tlacuache -->
+                <article class="min-w-0 bg-white dark:bg-darkpanel rounded-xl border-t-8 border-r-2 border-b-2 border-l-2 border-black border-t-talavera shadow-pop overflow-hidden flex flex-col">
+                    <div class="p-3 sm:p-4 border-b-2 border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-slate-800 flex justify-between items-center gap-2">
+                        <h3 class="font-bold text-lg sm:text-xl uppercase tracking-wider dark:text-white min-w-0">Tlacuache</h3>
+                        <span aria-hidden="true" class="text-xl sm:text-2xl flex-shrink-0">🌙</span>
+                    </div>
+                    <div class="p-4 flex-grow">
+                        <div class="bestiario-hacienda">
+                            <div class="text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">Hacienda</div>
+                            <div class="bg-blue-100/50 dark:bg-gray-800 p-2 rounded border border-gray-300 dark:border-gray-600 text-xs sm:text-sm font-medium text-black dark:text-gray-200">Cosecha múltiple instantánea</div>
+                        </div>
+                        <div class="bestiario-defensa">
+                            <div class="text-[10px] sm:text-xs font-bold text-papel dark:text-pink-300 uppercase tracking-wider mb-1">Defensa</div>
+                            <div class="bg-blue-100/50 dark:bg-gray-800 p-2 rounded border border-gray-300 dark:border-gray-600 text-xs sm:text-sm font-medium text-black dark:text-gray-200">Invisibilidad e inmunidad temporal</div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Animal 4: Pecarí -->
+                <article class="min-w-0 bg-white dark:bg-darkpanel rounded-xl border-t-8 border-r-2 border-b-2 border-l-2 border-black border-t-red-600 shadow-pop overflow-hidden flex flex-col">
+                    <div class="p-3 sm:p-4 border-b-2 border-gray-200 dark:border-gray-700 bg-red-50 dark:bg-slate-800 flex justify-between items-center gap-2">
+                        <h3 class="font-bold text-lg sm:text-xl uppercase tracking-wider dark:text-white min-w-0">Pecarí</h3>
+                        <span aria-hidden="true" class="text-xl sm:text-2xl flex-shrink-0">🐗</span>
+                    </div>
+                    <div class="p-4 flex-grow">
+                        <div class="bestiario-hacienda">
+                            <div class="text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">Hacienda</div>
+                            <div class="bg-red-100/50 dark:bg-gray-800 p-2 rounded border border-gray-300 dark:border-gray-600 text-xs sm:text-sm font-medium text-black dark:text-gray-200">Ara parcelas completas de golpe</div>
+                        </div>
+                        <div class="bestiario-defensa">
+                            <div class="text-[10px] sm:text-xs font-bold text-papel dark:text-pink-300 uppercase tracking-wider mb-1">Defensa</div>
+                            <div class="bg-red-100/50 dark:bg-gray-800 p-2 rounded border border-gray-300 dark:border-gray-600 text-xs sm:text-sm font-medium text-black dark:text-gray-200">Dispersión masiva de hordas</div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Animal 5: Xoloitzcuintle -->
+                <article class="min-w-0 bg-white dark:bg-darkpanel rounded-xl border-t-8 border-r-2 border-b-2 border-l-2 border-black border-t-blue-400 shadow-pop overflow-hidden flex flex-col">
+                    <div class="p-3 sm:p-4 border-b-2 border-gray-200 dark:border-gray-700 bg-cyan-50 dark:bg-slate-800 flex justify-between items-center gap-2">
+                        <h3 class="font-bold text-lg sm:text-xl uppercase tracking-wider dark:text-white min-w-0">Xoloitzcuintle</h3>
+                        <span aria-hidden="true" class="text-xl sm:text-2xl flex-shrink-0">🐕</span>
+                    </div>
+                    <div class="p-4 flex-grow">
+                        <div class="bestiario-hacienda">
+                            <div class="text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">Hacienda</div>
+                            <div class="bg-cyan-100/50 dark:bg-gray-800 p-2 rounded border border-gray-300 dark:border-gray-600 text-xs sm:text-sm font-medium text-black dark:text-gray-200">Rastrea criaturas heridas</div>
+                        </div>
+                        <div class="bestiario-defensa">
+                            <div class="text-[10px] sm:text-xs font-bold text-papel dark:text-pink-300 uppercase tracking-wider mb-1">Defensa</div>
+                            <div class="bg-cyan-100/50 dark:bg-gray-800 p-2 rounded border border-gray-300 dark:border-gray-600 text-xs sm:text-sm font-medium text-black dark:text-gray-200">Onda purificadora que cura área</div>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Animal 6: Ocelote -->
+                <article class="min-w-0 bg-white dark:bg-darkpanel rounded-xl border-t-8 border-r-2 border-b-2 border-l-2 border-black border-t-agave shadow-pop overflow-hidden flex flex-col">
+                    <div class="p-3 sm:p-4 border-b-2 border-gray-200 dark:border-gray-700 bg-green-50 dark:bg-slate-800 flex justify-between items-center gap-2">
+                        <h3 class="font-bold text-lg sm:text-xl uppercase tracking-wider dark:text-white min-w-0">Ocelote</h3>
+                        <span aria-hidden="true" class="text-xl sm:text-2xl flex-shrink-0">🐆</span>
+                    </div>
+                    <div class="p-4 flex-grow">
+                        <div class="bestiario-hacienda">
+                            <div class="text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">Hacienda</div>
+                            <div class="bg-green-100/50 dark:bg-gray-800 p-2 rounded border border-gray-300 dark:border-gray-600 text-xs sm:text-sm font-medium text-black dark:text-gray-200">Duplica recolección de cosecha</div>
+                        </div>
+                        <div class="bestiario-defensa">
+                            <div class="text-[10px] sm:text-xs font-bold text-papel dark:text-pink-300 uppercase tracking-wider mb-1">Defensa</div>
+                            <div class="bg-green-100/50 dark:bg-gray-800 p-2 rounded border border-gray-300 dark:border-gray-600 text-xs sm:text-sm font-medium text-black dark:text-gray-200">Críticos garantizados y aura intimidante</div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- Pre-Footer: Pricing & Leaderboard -->
+        <section class="py-16 bg-lightbg dark:bg-[#120a22]">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12">
+
+                    <!-- Pricing Card -->
+                    <div class="min-w-0 bg-white dark:bg-darkpanel p-6 sm:p-8 rounded-2xl border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col justify-between">
+                        <div>
+                            <span class="bg-black text-white text-[10px] sm:text-xs font-bold px-2 py-1 rounded uppercase tracking-wider mb-4 inline-block dark:bg-marigold dark:text-black">-30% Prelanzamiento</span>
+                            <h2 class="font-heading text-3xl sm:text-4xl mb-4 uppercase text-black dark:text-white">Paquete de Inicio</h2>
+                            <ul class="space-y-3 mb-8 font-medium dark:text-gray-300 text-sm sm:text-base">
+                                <li class="flex items-start gap-2"><span aria-hidden="true">✅</span> <span class="min-w-0">500 Orbes Místicos de moneda mística</span></li>
+                                <li class="flex items-start gap-2"><span aria-hidden="true">✅</span> <span class="min-w-0">3 cartas AR exclusivas de prelanzamiento</span></li>
+                                <li class="flex items-start gap-2"><span aria-hidden="true">✅</span> <span class="min-w-0">Skin «Alebrije Nocturno» para tu nahual</span></li>
+                                <li class="flex items-start gap-2"><span aria-hidden="true">✅</span> <span class="min-w-0">Acceso anticipado al Santuario</span></li>
+                            </ul>
+                        </div>
+                        <div class="mt-auto">
+                            <div class="flex flex-wrap items-baseline gap-2 mb-4">
+                                <span class="text-4xl sm:text-5xl font-heading text-orange-700 dark:text-marigold" aria-label="Precio especial: 349 pesos">$349 MXN</span>
+                                <span class="text-lg sm:text-xl text-gray-500 line-through font-bold" aria-label="Precio original: 499 pesos">$499 MXN</span>
+                            </div>
+                            <a href="https://itch.io" target="_blank" rel="noopener noreferrer" class="btn block w-full text-center bg-marigold text-black font-heading text-lg sm:text-xl py-3 sm:py-4 rounded border-2 border-black shadow-pop uppercase">
+                                Reservar Paquete<span class="sr-only"> (se abre itch.io en una pestaña nueva)</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Leaderboard -->
+                    <div class="min-w-0 bg-lightbg dark:bg-[#1e1438] p-6 sm:p-8 rounded-2xl border-4 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                        <div class="flex items-center gap-3 mb-4 sm:mb-6">
+                            <span aria-hidden="true" class="text-2xl sm:text-3xl">🏆</span>
+                            <h2 class="font-heading text-2xl sm:text-3xl uppercase text-black dark:text-white">Supervivientes</h2>
+                        </div>
+                        <p class="text-xs sm:text-sm font-medium mb-6 dark:text-gray-400">Mejores tiempos de aguante en modo horda infinita.</p>
+
+                        <ol class="space-y-3">
+                            <li class="flex flex-col sm:flex-row justify-between p-3 bg-white dark:bg-darkpanel border-2 border-black rounded shadow-sm gap-1 sm:gap-4 sm:items-center">
+                                <div class="flex items-center gap-2 sm:gap-3 min-w-0 w-full sm:w-auto">
+                                    <span class="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 rounded-full bg-yellow-400 flex items-center justify-center text-sm font-bold border border-black text-black">1</span>
+                                    <span class="font-bold text-sm md:text-base dark:text-white truncate">Citlali_Nahual</span>
+                                </div>
+                                <div class="text-sm md:text-base font-bold text-papel dark:text-pink-300 pl-9 sm:pl-0 sm:text-right whitespace-nowrap">42:18 - Ola 27</div>
+                            </li>
+                            <li class="flex flex-col sm:flex-row justify-between p-3 bg-white dark:bg-darkpanel border-2 border-black rounded shadow-sm gap-1 sm:gap-4 sm:items-center">
+                                <div class="flex items-center gap-2 sm:gap-3 min-w-0 w-full sm:w-auto">
+                                    <span class="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 rounded-full bg-gray-300 flex items-center justify-center text-sm font-bold border border-black text-black">2</span>
+                                    <span class="font-bold text-sm md:text-base dark:text-white truncate">XoloGuardian</span>
+                                </div>
+                                <div class="text-sm md:text-base font-bold text-papel dark:text-pink-300 pl-9 sm:pl-0 sm:text-right whitespace-nowrap">39:04 - Ola 25</div>
+                            </li>
+                            <li class="flex flex-col sm:flex-row justify-between p-3 bg-white dark:bg-darkpanel border-2 border-black rounded shadow-sm gap-1 sm:gap-4 sm:items-center">
+                                <div class="flex items-center gap-2 sm:gap-3 min-w-0 w-full sm:w-auto">
+                                    <span class="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 rounded-full bg-orange-400 flex items-center justify-center text-sm font-bold border border-black text-black">3</span>
+                                    <span class="font-bold text-sm md:text-base dark:text-white truncate">DoñaCempasúchil</span>
+                                </div>
+                                <div class="text-sm md:text-base font-bold text-papel dark:text-pink-300 pl-9 sm:pl-0 sm:text-right whitespace-nowrap">36:51 - Ola 24</div>
+                            </li>
+                            <li class="flex flex-col sm:flex-row justify-between p-3 bg-white dark:bg-darkpanel border-2 border-black rounded shadow-sm gap-1 sm:gap-4 sm:items-center">
+                                <div class="flex items-center gap-2 sm:gap-3 min-w-0 w-full sm:w-auto">
+                                    <span class="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center text-sm font-bold border border-black dark:text-white text-black">4</span>
+                                    <span class="font-bold text-sm md:text-base dark:text-white truncate">TlacuacheVeloz</span>
+                                </div>
+                                <div class="text-sm md:text-base font-bold text-papel dark:text-pink-300 pl-9 sm:pl-0 sm:text-right whitespace-nowrap">33:12 - Ola 21</div>
+                            </li>
+                            <!-- Posición para el visitante: invitación a iniciar sesión -->
+                            <li class="flex flex-col sm:flex-row justify-between p-3 bg-pink-700 text-white border-2 border-black rounded shadow-sm gap-2 sm:gap-4 sm:items-center">
+                                <div class="flex items-center gap-2 sm:gap-3 min-w-0 w-full sm:w-auto">
+                                    <span aria-hidden="true" class="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 rounded-full bg-white text-black flex items-center justify-center text-sm font-bold border border-black">?</span>
+                                    <span class="font-bold text-sm md:text-base">¿Podrías ser tú?</span>
+                                </div>
+                                <button type="button" onclick="openLogin()" class="btn w-full sm:w-auto bg-white text-black font-bold text-xs sm:text-sm px-4 py-2 rounded border-2 border-black shadow-pop whitespace-nowrap">
+                                    Iniciar sesión
+                                </button>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer id="comunidad" class="bg-talavera text-white border-t-4 border-black py-12 sm:py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 sm:gap-10">
+                <!-- Newsletter -->
+                <div class="md:col-span-2 space-y-4 min-w-0">
+                    <div class="flex items-center gap-2 mb-2 sm:mb-4">
+                        <img src="logo.png" alt="Logotipo de Yolcatl" class="h-8 sm:h-10 w-auto max-w-full brightness-0 invert">
+                    </div>
+                    <p class="text-xs sm:text-sm font-medium max-w-sm">Los Murmullos del Bosque: recibe lore, fechas de pruebas y cartas AR antes que nadie.</p>
+
+                    <form id="newsletter-form" onsubmit="handleSubscription(event)" class="flex max-w-sm w-full">
+                        <label for="email-input" class="sr-only">Correo electrónico para newsletter</label>
+                        <input id="email-input" type="email" autocomplete="email" placeholder="tu@correo.com" required class="min-w-0 w-full px-3 py-2 rounded-l border-2 border-black text-black outline-none focus:bg-yellow-50 text-sm">
+                        <button type="submit" class="btn bg-marigold text-black font-bold px-3 py-2 rounded-r border-y-2 border-r-2 border-black text-xs sm:text-sm flex-shrink-0">
+                            SUSCRIBIRME
+                        </button>
+                    </form>
+
+                    <div class="flex flex-wrap gap-2 sm:gap-4 pt-2 sm:pt-4" role="group" aria-label="Plataformas disponibles">
+                        <a href="https://itch.io" target="_blank" rel="noopener noreferrer" class="btn bg-red-800 text-white px-3 sm:px-4 py-1.5 rounded text-xs sm:text-sm font-bold border-2 border-black">itch.io<span class="sr-only"> (se abre en una pestaña nueva)</span></a>
+                        <a href="Yolcatl-Demo.apk" download="Yolcatl-Demo.apk" class="btn bg-white text-black px-3 sm:px-4 py-1.5 rounded text-xs sm:text-sm font-bold border-2 border-black">Android<span class="sr-only"> (descargar archivo APK)</span></a>
+                    </div>
+                </div>
+
+                <!-- Links 1 -->
+                <nav aria-label="Enlaces secundarios del sitio">
+                    <h2 class="font-heading text-base sm:text-lg mb-3 sm:mb-4 text-yellow-300">EXPLORA</h2>
+                    <ul class="space-y-2 text-xs sm:text-sm font-medium">
+                        <li><a href="#hacienda">La Hacienda</a></li>
+                        <li><a href="#ciclo">Ciclo de Juego</a></li>
+                        <li><a href="#alquimia">Alquimia AR</a></li>
+                        <li><a href="#metamorfosis">Metamorfosis</a></li>
+                    </ul>
+                </nav>
+
+                <!-- Links 2 -->
+                <nav aria-label="Enlaces de creadores">
+                    <h2 class="font-heading text-base sm:text-lg mb-3 sm:mb-4 text-yellow-300">CREADORES</h2>
+                    <ul class="space-y-2 text-xs sm:text-sm font-medium">
+                        <li><a href="KitPrensa.zip" download="KitPrensa.zip">Kit de Prensa <span class="sr-only">(descargar archivo ZIP)</span></a></li>
+                        <li><a href="https://discord.com" target="_blank" rel="noopener noreferrer">Discord Comunitario <span class="sr-only">(se abre en una pestaña nueva)</span></a></li>
+                        <li><a href="mailto:contacto@yolcatl.com">Contacto</a></li>
+                        <li><a href="https://nahuatl.wired-humanities.org" target="_blank" rel="noopener noreferrer">Glosario Náhuatl <span class="sr-only">(se abre en una pestaña nueva)</span></a></li>
+                    </ul>
+                </nav>
+            </div>
+
+            <div class="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-blue-800 flex flex-col sm:flex-row justify-between items-center text-xs font-medium gap-4">
+                <p class="text-center sm:text-left">© 2026 YOLCATL. Todos los derechos reservados.</p>
+                <div class="flex gap-2" role="group" aria-label="Idioma">
+                    <button type="button" class="btn-flat bg-black px-3 py-1 rounded text-white" aria-pressed="true" aria-label="Idioma Español">ES</button>
+                    <button type="button" onclick="showToast('Próximamente', 'La versión en inglés estará disponible pronto.')" class="btn-flat border border-white px-3 py-1 rounded" aria-pressed="false" aria-label="Cambiar a idioma Inglés">EN</button>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Ventana emergente: Iniciar sesión -->
+    <dialog id="login-dialog" aria-labelledby="login-title" class="w-[calc(100%-2rem)] max-w-md p-0 rounded-2xl border-4 border-black bg-white dark:bg-darkpanel text-black dark:text-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] backdrop:bg-black/60">
+        <div class="p-5 sm:p-8">
+            <div class="flex items-start justify-between gap-4 mb-2">
+                <h2 id="login-title" class="font-heading text-2xl sm:text-3xl uppercase min-w-0">Iniciar sesión</h2>
+                <button type="button" onclick="closeLogin()" class="btn-flat flex-shrink-0 w-9 h-9 rounded-full border-2 border-black bg-gray-100 text-black text-xl leading-none font-bold" aria-label="Cerrar ventana de inicio de sesión">&times;</button>
+            </div>
+            <p class="text-sm text-gray-700 dark:text-gray-300 mb-6">Entra para reclamar tu recompensa diaria y aparecer en el ranking de Supervivientes.</p>
+
+            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label for="login-email" class="block font-bold text-sm mb-1">Correo electrónico</label>
+                    <input id="login-email" name="email" type="email" autocomplete="email" required autofocus placeholder="tu@correo.com" class="w-full px-3 py-2 rounded border-2 border-black bg-white text-black text-sm">
+                </div>
+                <div>
+                    <label for="login-password" class="block font-bold text-sm mb-1">Contraseña</label>
+                    <input id="login-password" name="password" type="password" autocomplete="current-password" required placeholder="Tu contraseña" class="w-full px-3 py-2 rounded border-2 border-black bg-white text-black text-sm">
+                </div>
+                <button type="submit" class="btn w-full bg-marigold text-black font-heading text-lg py-3 rounded border-2 border-black shadow-pop uppercase">Entrar</button>
+            </form>
+        </div>
+    </dialog>
+
+    <script>
+        // 1. Tema Día/Noche (automático según el sistema; la elección manual se recuerda)
+        function applyTheme(theme) {
+            document.documentElement.classList.toggle('dark', theme === 'dark');
+            document.getElementById('btn-dia').setAttribute('aria-pressed', String(theme === 'light'));
+            document.getElementById('btn-noche').setAttribute('aria-pressed', String(theme === 'dark'));
+        }
+
+        function setTheme(theme) {
+            applyTheme(theme);
+            try { localStorage.setItem('yolcatl-theme', theme); } catch (e) {}
+        }
+
+        (function initTheme() {
+            const media = window.matchMedia('(prefers-color-scheme: dark)');
+            let saved = null;
+            try { saved = localStorage.getItem('yolcatl-theme'); } catch (e) {}
+            applyTheme(saved || (media.matches ? 'dark' : 'light'));
+
+            // Si el usuario cambia el modo de su dispositivo/navegador y no eligió uno manualmente, se actualiza solo
+            const onChange = (e) => {
+                let manual = null;
+                try { manual = localStorage.getItem('yolcatl-theme'); } catch (err) {}
+                if (!manual) applyTheme(e.matches ? 'dark' : 'light');
+            };
+            if (media.addEventListener) media.addEventListener('change', onChange);
+            else if (media.addListener) media.addListener(onChange);
+        })();
+
+        // 2. Pestañas (Ciclo de Juego) con soporte de teclado (flechas, Inicio, Fin)
+        function switchTab(tabId, focus) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.setAttribute('aria-selected', 'false');
+                btn.setAttribute('tabindex', '-1');
+            });
+            document.getElementById(tabId).classList.add('active');
+            const activeBtn = document.getElementById('btn-' + tabId);
+            activeBtn.setAttribute('aria-selected', 'true');
+            activeBtn.setAttribute('tabindex', '0');
+            if (focus) activeBtn.focus();
+        }
+
+        document.querySelector('[role="tablist"]').addEventListener('keydown', (e) => {
+            const tabs = Array.from(document.querySelectorAll('.tab-btn'));
+            const index = tabs.indexOf(document.activeElement);
+            if (index === -1) return;
+            let next = null;
+            if (e.key === 'ArrowRight') next = (index + 1) % tabs.length;
+            else if (e.key === 'ArrowLeft') next = (index - 1 + tabs.length) % tabs.length;
+            else if (e.key === 'Home') next = 0;
+            else if (e.key === 'End') next = tabs.length - 1;
+            if (next !== null) {
+                e.preventDefault();
+                switchTab(tabs[next].id.replace('btn-', ''), true);
+            }
+        });
+
+        // 3. Notificaciones (Toast)
+        function showToast(title, message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'bg-white dark:bg-darkpanel text-black dark:text-white border-2 border-black shadow-pop p-3 sm:p-4 rounded-lg flex items-start gap-3 w-full sm:w-auto sm:min-w-[250px] sm:max-w-sm relative';
+
+            const icon = document.createElement('div');
+            icon.setAttribute('aria-hidden', 'true');
+            icon.className = 'text-xl sm:text-2xl mt-1';
+            icon.textContent = '✨';
+
+            const body = document.createElement('div');
+            body.className = 'pr-6 min-w-0';
+            const t = document.createElement('p');
+            t.className = 'font-bold text-sm sm:text-base';
+            t.textContent = title;
+            const m = document.createElement('p');
+            m.className = 'text-xs sm:text-sm text-gray-700 dark:text-gray-300';
+            m.textContent = message;
+            body.append(t, m);
+
+            const close = document.createElement('button');
+            close.type = 'button';
+            close.className = 'btn-flat absolute top-1 right-2 text-xl text-gray-600 dark:text-gray-300 rounded p-1';
+            close.setAttribute('aria-label', 'Cerrar notificación');
+            close.innerHTML = '&times;';
+            close.addEventListener('click', () => toast.remove());
+
+            toast.append(icon, body, close);
+            container.appendChild(toast);
+
+            setTimeout(() => toast.remove(), 5000);
+        }
+
+        // 4. Ventana de inicio de sesión
+        const loginDialog = document.getElementById('login-dialog');
+
+        function openLogin() {
+            if (typeof loginDialog.showModal === 'function') loginDialog.showModal();
+            else loginDialog.setAttribute('open', '');
+        }
+
+        function closeLogin() {
+            if (typeof loginDialog.close === 'function') loginDialog.close();
+            else loginDialog.removeAttribute('open');
+        }
+
+        // Cerrar al hacer clic fuera del recuadro
+        loginDialog.addEventListener('click', (e) => { if (e.target === loginDialog) closeLogin(); });
+
+        function handleLogin(event) {
+            event.preventDefault();
+            // Aquí conectarás tu backend de autenticación
+            showToast('Inicio de sesión', 'Formulario de demostración: aún no está conectado a un servidor.');
+            event.target.reset();
+            closeLogin();
+        }
+
+        // 5. Suscripción a Newsletter
+        async function handleSubscription(event) {
+            event.preventDefault();
+
+            const emailInput = document.getElementById('email-input');
+            const email = emailInput.value;
+            const submitButton = event.target.querySelector('button[type="submit"]');
+            const originalText = submitButton.textContent;
+
+            submitButton.disabled = true;
+            submitButton.classList.add('opacity-75');
+            submitButton.textContent = 'ENVIANDO...';
+
+            try {
+                const response = await fetch('http://localhost:3000/subscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+
+                const data = await response.json();
+
+                if (response.status === 201) {
+                    showToast('¡Suscrito!', data.message);
+                    event.target.reset();
+                } else if (response.status === 409) {
+                    showToast('Aviso', data.message);
+                } else {
+                    showToast('Error', data.message || 'Ocurrió un problema procesando tu solicitud.');
+                }
+            } catch (error) {
+                console.error('Error de conexión:', error);
+                showToast('Error de conexión', 'Asegúrate de que el servidor esté encendido.');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.classList.remove('opacity-75');
+                submitButton.textContent = originalText;
+            }
+        }
+    </script>
+</body>
+</html>
