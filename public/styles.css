@@ -1,0 +1,356 @@
+/* =========================================
+   1. GOOGLE FONTS & VARIABLES (:root)
+   ========================================= */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Lilita+One&display=swap');
+
+:root {
+  /* Paleta de Colores Principal */
+  --color-papel: #E91E63;
+  --color-marigold: #FF9800;
+  --color-talavera: #0284C7;
+  --color-agave: #166534;
+  --color-darkbg: #160d2b;
+  --color-lightbg: #fdf5e6;
+  --color-panel: #ffffff;
+  --color-darkpanel: #2d1b4e;
+
+  /* Tematización dinámica (Día / Noche) */
+  --bg-body: var(--color-lightbg);
+  --text-main: #111827;
+  --text-muted: #4b5563;
+  --bg-card: var(--color-panel);
+  --border-color: #000000;
+
+  /* Tipografías */
+  --font-sans: 'Inter', sans-serif;
+  --font-heading: 'Lilita One', cursive;
+
+  /* Sombras "Pop" Neobrutalistas */
+  --shadow-pop: 4px 4px 0px 0px rgba(0,0,0,1);
+  --shadow-pop-lg: 8px 8px 0px 0px rgba(0,0,0,1);
+  --shadow-hover: 6px 6px 0px 0px rgba(0,0,0,1);
+  --shadow-active: 2px 2px 0px 0px rgba(0,0,0,1);
+}
+
+/* Dark Mode Preferencia de Sistema */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-body: var(--color-darkbg);
+    --text-main: #f3f4f6;
+    --text-muted: #9ca3af;
+    --bg-card: var(--color-darkpanel);
+  }
+}
+
+/* Switch Manual de Modo Oscuro / Claro */
+html.dark {
+  --bg-body: var(--color-darkbg);
+  --text-main: #f3f4f6;
+  --text-muted: #9ca3af;
+  --bg-card: var(--color-darkpanel);
+}
+
+html.light {
+  --bg-body: var(--color-lightbg);
+  --text-main: #111827;
+  --text-muted: #4b5563;
+  --bg-card: var(--color-panel);
+}
+
+/* =========================================
+   2. RESET CSS & BASE
+   ========================================= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 6rem;
+}
+
+section[id], footer[id] {
+  scroll-margin-top: 6rem;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-body);
+  color: var(--text-main);
+  line-height: 1.5;
+  overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  padding-bottom: 6rem;
+}
+
+h1, h2, h3, h4, .font-heading {
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+}
+
+h1, h2, h3, p, li, span, a, button, label {
+  overflow-wrap: break-word;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:not(.btn):hover {
+  text-decoration: underline;
+}
+
+::selection {
+  background: var(--color-papel);
+  color: #ffffff;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: var(--bg-body); }
+::-webkit-scrollbar-thumb { background: var(--color-marigold); border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-papel); }
+
+/* Foco visible accesibilidad (WCAG 2.4.7) */
+:focus-visible {
+  outline: 3px solid var(--color-talavera);
+  outline-offset: 2px;
+}
+html.dark :focus-visible { outline-color: #FFD54F; }
+footer :focus-visible { outline-color: #ffffff; }
+
+/* Screen Reader Only Utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+.sr-only:focus {
+  position: fixed;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 60;
+  width: auto;
+  height: auto;
+  clip: auto;
+  white-space: normal;
+  background: #fff;
+  color: #000;
+  padding: 0.5rem 1rem;
+  border: 2px solid #000;
+  font-weight: bold;
+}
+
+/* Pattern Border */
+.border-pattern {
+  border-bottom: 8px solid;
+  border-image: repeating-linear-gradient(45deg, #FF9800, #FF9800 10px, #E91E63 10px, #E91E63 20px, #0284C7 20px, #0284C7 30px, #166534 30px, #166534 40px) 8;
+}
+
+/* =========================================
+   3. BOTONES Y COMPONENTES (Únicos elementos con animación)
+   ========================================= */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-weight: 700;
+  border: 2px solid var(--border-color);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-pop);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  white-space: nowrap;
+  font-size: 0.875rem;
+}
+
+.btn-pill { border-radius: 9999px; padding: 0.75rem 1.5rem; }
+
+.btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-hover);
+  filter: brightness(1.1) drop-shadow(0 0 10px rgba(255, 152, 0, 0.9));
+}
+
+.btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: var(--shadow-active);
+}
+
+.btn-flat {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+.btn-flat:hover { filter: brightness(1.12) drop-shadow(0 0 8px rgba(255, 152, 0, 0.95)); }
+
+/* =========================================
+   4. LAYOUTS RESPONSIVOS & ESTRUCTURA
+   ========================================= */
+.max-w-7xl {
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+/* Navigation (Flexbox Desktop & Stack Mobile) */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 5rem;
+  gap: 0.5rem;
+}
+
+.nav-links {
+  display: none;
+  gap: 1.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+@media (min-width: 1024px) {
+  .nav-links { display: flex; }
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    height: auto;
+    padding: 1rem;
+  }
+}
+
+/* Hero Section (Flexbox Centrado) */
+.hero-section {
+  min-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding-top: 7rem;
+  padding-bottom: 4rem;
+  animation: fade-in 0.8s ease-out;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3rem;
+  align-items: center;
+  width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .hero-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* Features / Cards Grid (1 col Mobile, 2 Tablet, 3 Desktop) */
+.grid-features {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .grid-features { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 1024px) {
+  .grid-features { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* About Layout (2 columnas en Desktop, Stack en Mobile) */
+.about-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .about-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* Footer Flexbox / Grid Layout */
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .footer-grid { grid-template-columns: 2fr 1fr 1fr; }
+}
+
+/* =========================================
+   5. COMPONENTES ESPECÍFICOS (Sin animaciones de hover en tarjetas)
+   ========================================= */
+.card-panel {
+  background-color: var(--bg-card);
+  border: 2px solid #000;
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-pop);
+  padding: 1.25rem;
+  /* Se eliminan las propiedades de transition, transform y hover */
+}
+
+/* Bestiario Display Logic vinculada al modo oscuro (Noche) */
+.bestiario-defensa { display: none; }
+html.dark .bestiario-defensa { display: block; }
+html.dark .bestiario-hacienda { display: none; }
+
+/* Tabs del Ciclo de Juego */
+.tab-btn {
+  background: #d1d5db;
+  color: #1f2937;
+  border: 2px solid #000;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-weight: bold;
+}
+html.dark .tab-btn { background: #374151; color: #e5e7eb; }
+
+.tab-btn[aria-selected="true"],
+html.dark .tab-btn[aria-selected="true"] {
+  background: var(--color-marigold);
+  color: #000;
+  box-shadow: 2px 2px 0 0 #000;
+}
+
+.tab-content { display: none; animation: fade-in 0.4s ease; }
+.tab-content.active { display: block; }
+
+/* Image Dark/Light Swap */
+html.dark .img-light-only { display: none !important; }
+html:not(.dark) .img-dark-only { display: none !important; }
+
+/* =========================================
+   6. ANIMACIONES & ACCESIBILIDAD
+   ========================================= */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, .hero-section, .btn, .card-panel, .tab-content {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}
